@@ -1,15 +1,29 @@
 import './App.css'
 import {useWhisper} from "./vendor/use-whisper-main/src";
-import {API_KEY} from "./config.ts";
 
 function App() {
     const {startRecording, stopRecording, recording, transcript} = useWhisper({
-        apiKey: API_KEY,
-        autoTranscribe: true,
+        // autoTranscribe: false,
         whisperConfig: {
             language: 'pl',
         },
         removeSilence: true,
+        onTranscribe: async (blob: Blob) => {
+            const formData = new FormData();
+            formData.append('file', blob, 'recording.mp3');
+
+            const resp = await fetch('http://localhost:3001/stt', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const text = await resp.text();
+
+            return {
+                blob,
+                text,
+            };
+        },
     });
 
     return (
